@@ -62,3 +62,81 @@ resource "aws_subnet" "private_az2" {
     Name = "private-subnet-az2"
   }
 }
+
+# --------------------------------------------------
+# INTERNET GATEWAY
+# Provides a path between the VPC and the internet.
+# Public subnets will use it through their route table.
+# --------------------------------------------------
+
+resource "aws_internet_gateway" "main" {
+  vpc_id = aws_vpc.main.id
+
+  tags = {
+    Name = "secure-vpc-igw"
+  }
+} # --------------------------------------------------
+# PUBLIC ROUTE TABLE
+# Shared by both public subnets across AZ1 and AZ2.
+# --------------------------------------------------
+
+resource "aws_route_table" "public" {
+  vpc_id = aws_vpc.main.id
+
+  tags = {
+    Name = "public-route-table"
+  }
+}
+
+# Send internet-bound IPv4 traffic to the IGW.
+# The VPC's local route is added automatically by AWS.
+
+resource "aws_route" "public_internet" {
+  route_table_id         = aws_route_table.public.id
+  destination_cidr_block = "0.0.0.0/0"
+  gateway_id             = aws_internet_gateway.main.id
+}
+
+# --------------------------------------------------
+# PUBLIC SUBNET ASSOCIATIONS
+# Both public subnets use the public route table.
+# --------------------------------------------------
+
+resource "aws_route_table_association" "public_az1" {
+  subnet_id      = aws_subnet.public_az1.id
+  route_table_id = aws_route_table.public.id
+}
+
+resource "aws_route_table_association" "public_az2" {
+  subnet_id      = aws_subnet.public_az2.id
+  route_table_id = aws_route_table.public.id
+}
+
+# --------------------------------------------------
+# PRIVATE ROUTE TABLE
+# No internet default route is defined yet.
+# NAT Gateway routing will be added next milestone.
+# --------------------------------------------------
+
+resource "aws_route_table" "private" {
+  vpc_id = aws_vpc.main.id
+
+  tags = {
+    Name = "private-route-table"
+  }
+}
+
+# --------------------------------------------------
+# PRIVATE SUBNET ASSOCIATIONS
+# Associate both private subnets with this route table.
+# --------------------------------------------------
+
+resource "aws_route_table_association" "private_az1" {
+  subnet_id      = aws_subnet.private_az1.id
+  route_table_id = aws_route_table.private.id
+}
+
+resource "aws_route_table_association" "private_az2" {
+  subnet_id      = aws_subnet.private_az2.id
+  route_table_id = aws_route_table.private.id
+}
