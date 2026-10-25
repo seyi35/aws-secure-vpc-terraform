@@ -140,3 +140,47 @@ resource "aws_route_table_association" "private_az2" {
   subnet_id      = aws_subnet.private_az2.id
   route_table_id = aws_route_table.private.id
 }
+
+
+# --------------------------------------------------
+# NAT GATEWAY - OUTBOUND INTERNET FOR PRIVATE SUBNETS
+# --------------------------------------------------
+
+# Allocate a static public IPv4 address for the NAT Gateway.
+# AWS uses this Elastic IP for outbound internet traffic.
+resource "aws_eip" "nat" {
+  domain = "vpc"
+
+  tags = {
+    Name = "secure-vpc-nat-eip"
+  }
+}
+
+# Deploy one public NAT Gateway in AZ1.
+# Both private subnets will use it for outbound internet.
+# This saves lab costs but creates an AZ1 dependency.
+resource "aws_nat_gateway" "main" {
+  allocation_id     = aws_eip.nat.id
+  subnet_id         = aws_subnet.public_az1.id
+  connectivity_type = "public"
+  availability_mode = "zonal"
+
+  # Ensure the Internet Gateway exists before creating NAT.
+  depends_on = [aws_internet_gateway.main]
+
+  tags = {
+    Name = "secure-vpc-nat"
+  }
+}
+
+# --------------------------------------------------
+# PRIVATE INTERNET ROUTE
+# --------------------------------------------------
+
+# Send internet-bound traffic from both private subnets
+# through NAT instead of directly through the Internet Gateway.
+resource "aws_route" "private_internet" {
+  route_table_id         = aws_route_table.private.id
+  destination_cidr_block = "0.0.0.0/0"
+  nat_gateway_id         = aws_nat_gateway.main.id
+}
