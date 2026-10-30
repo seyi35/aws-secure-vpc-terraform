@@ -26,3 +26,13 @@ output "web_private_ips" {
   description = "Private IP addresses of the web servers"
   value       = aws_instance.web[*].private_ip
 }
+
+# --------------------------------------------------
+# APPLICATION LOAD BALANCER OUTPUT
+# --------------------------------------------------
+
+# Public DNS address used to access our website.
+output "alb_dns_name" {
+  description = "Public DNS name of the Application Load Balancer"
+  value       = aws_lb.web.dns_name
+}
