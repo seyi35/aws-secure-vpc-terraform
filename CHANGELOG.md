@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented here.
 
-## [1.0.0] — 2026-10-31
+## [1.0.0] - 2026-10-31
 
 ### Added
 - Custom Terraform VPC module with two public and two private subnets across two AWS Availability Zones.
