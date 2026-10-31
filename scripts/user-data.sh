@@ -39,3 +39,52 @@ EOF
 
 # Log confirmation that initial configuration completed.
 echo "Apache setup completed on $WEB_NAME"
+
+
+# --------------------------------------------------
+# TOOPLATE WEBSITE DEPLOYMENT
+# --------------------------------------------------
+
+# Terraform inserts the template download URL here.
+TOOPLATE_URL="${tooplate_url}"
+
+# Create temporary workspace.
+WORK_DIR="$(mktemp -d)"
+
+# Download the ZIP archive.
+# -f fails on HTTP errors; -L follows redirects.
+curl -fL --retry 3 \
+  "$TOOPLATE_URL" \
+  -o "$WORK_DIR/tooplate.zip"
+
+# Verify the archive is a valid ZIP before extracting.
+unzip -tq "$WORK_DIR/tooplate.zip"
+
+# Extract the website.
+unzip -q "$WORK_DIR/tooplate.zip" -d "$WORK_DIR/site"
+
+# Find index.html even if the ZIP contains a parent folder.
+SITE_INDEX="$(find "$WORK_DIR/site" -type f -name index.html -print -quit)"
+
+if [[ -z "$SITE_INDEX" ]]; then
+  echo "ERROR: No index.html found in template archive"
+  exit 1
+fi
+
+SITE_ROOT="$(dirname "$SITE_INDEX")"
+
+# Replace the temporary homepage with the Tooplate site.
+rm -f /var/www/html/index.html
+cp -a "$SITE_ROOT"/. /var/www/html/
+
+# Preserve the ALB health endpoint independently of the site.
+echo "healthy" > /var/www/html/health
+
+# Set ownership and restart Apache.
+chown -R www-data:www-data /var/www/html
+systemctl restart apache2
+
+# Remove temporary installation files.
+rm -rf "$WORK_DIR"
+
+echo "Tooplate website deployed successfully on $WEB_NAME"

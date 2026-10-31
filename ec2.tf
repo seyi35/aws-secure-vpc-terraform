@@ -29,11 +29,13 @@ resource "aws_instance" "web" {
   # Only allow inbound traffic permitted by our web SG.
   vpc_security_group_ids = [aws_security_group.web.id]
 
-  # Run our Bash setup script on first boot.
-  # Give each instance its own web-server name.
+  # Configure Apache and install the same Tooplate site
+  # on both private EC2 instances during initial boot.
   user_data = templatefile("${path.module}/scripts/user-data.sh", {
-    server_name = format("web%02d", count.index + 1)
+    server_name  = format("web%02d", count.index + 1)
+    tooplate_url = var.tooplate_download_url
   })
+
 
   # Recreate the instance if its initial setup changes.
   user_data_replace_on_change = true

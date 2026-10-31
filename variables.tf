@@ -15,3 +15,9 @@ variable "availability_zones" {
     "eu-central-1b"
   ]
 }
+
+# Direct ZIP download URL for the selected Tooplate website.
+variable "tooplate_download_url" {
+  description = "HTTPS download URL for the Tooplate template ZIP"
+  type        = string
+}
