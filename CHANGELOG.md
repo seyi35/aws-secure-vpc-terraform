@@ -26,4 +26,4 @@ All notable changes to this project are documented here.
 ### Cleanup
 - Destroyed the lab infrastructure using Terraform after testing to avoid ongoing resource charges.
 
-**Release status:** v1.0.0 — Initial completed release.
+**Release status:** v1.0.0 - Initial completed release.
